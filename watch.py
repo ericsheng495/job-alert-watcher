@@ -95,14 +95,14 @@ def build_dashboard(all_jobs, domains, watched_companies):
         domain = domains.get(c["name"], "")
         logo_url = f"https://logo.clearbit.com/{domain}" if domain else ""
         n = counts.get(c["name"], 0)
-        badge_style = "background:#111827;color:#fff;" if n > 0 else "background:#e5e7eb;color:#9ca3af;"
+        cid = re.sub(r"[^a-z0-9]", "", c["name"].lower())
+        count_label = f"{n} job{'s' if n != 1 else ''}"
+        count_style = "color:#111827;font-weight:700;" if n > 0 else "color:#9ca3af;font-weight:500;"
         company_tiles += (
-            f'<div class="co-tile">'
-            f'<div class="co-tile-top">'
+            f'<div class="co-card" onclick="filter(\'{cid}\')" id="co-{cid}">'
             f'<img src="{logo_url}" onerror="this.style.display=\'none\'" alt="{c["name"]}" class="co-logo">'
-            f'<span class="co-badge" style="{badge_style}">{n}</span>'
-            f'</div>'
             f'<div class="co-name">{c["name"]}</div>'
+            f'<div class="co-count" style="{count_style}">{count_label}</div>'
             f'</div>'
         )
 
@@ -152,12 +152,13 @@ def build_dashboard(all_jobs, domains, watched_companies):
 
     .co-strip{{background:#fff;border-bottom:1px solid #e5e7eb;padding:20px 32px 24px}}
     .co-label{{font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin-bottom:16px}}
-    .co-grid{{display:flex;gap:14px;flex-wrap:wrap}}
-    .co-tile{{display:flex;flex-direction:column;align-items:center;gap:6px;width:68px}}
-    .co-tile-top{{position:relative}}
-    .co-logo{{width:44px;height:44px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;background:#fff;display:block}}
-    .co-badge{{position:absolute;top:-5px;right:-7px;min-width:18px;height:18px;border-radius:999px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #f5f5f5}}
-    .co-name{{font-size:10px;color:#6b7280;text-align:center;line-height:1.3}}
+    .co-grid{{display:flex;gap:10px;flex-wrap:wrap}}
+    .co-card{{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;width:110px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;user-select:none}}
+    .co-card:hover{{border-color:#d1d5db;box-shadow:0 2px 8px rgba(0,0,0,.06)}}
+    .co-card.active{{border-color:#111827;box-shadow:0 0 0 2px #111827}}
+    .co-logo{{width:40px;height:40px;border-radius:8px;object-fit:contain;background:#f9fafb;padding:4px}}
+    .co-name{{font-size:12px;font-weight:600;color:#374151;text-align:center;line-height:1.3}}
+    .co-count{{font-size:12px;text-align:center}}
 
     .toolbar{{padding:12px 32px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e5e7eb;background:#fff}}
     .chip{{padding:5px 12px;border-radius:999px;border:1px solid #d1d5db;background:#fff;font-size:12px;color:#374151;cursor:pointer;transition:all .12s}}
@@ -190,7 +191,7 @@ def build_dashboard(all_jobs, domains, watched_companies):
 
   <div class="co-strip">
     <div class="co-label">Watching {n_watched} companies</div>
-    <div class="co-grid">{company_tiles}</div>
+    <div class="co-grid" id="co-grid">{company_tiles}</div>
   </div>
 
   <div class="toolbar">
@@ -204,9 +205,12 @@ def build_dashboard(all_jobs, domains, watched_companies):
   <script>
     let active = '';
     function filter(c) {{
+      if (active === c) c = '';  // click active card to deselect
       active = c;
       document.querySelectorAll('.chip').forEach(el => el.classList.remove('active'));
       document.getElementById('chip-' + (c || 'all')).classList.add('active');
+      document.querySelectorAll('.co-card').forEach(el => el.classList.remove('active'));
+      if (c) {{ const co = document.getElementById('co-' + c); if (co) co.classList.add('active'); }}
       applyFilters();
     }}
     function applyFilters() {{
