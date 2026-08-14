@@ -2,32 +2,41 @@
 # A job matches if it hits at least one "include" and no "exclude".
 filters:
   include:
-    - "new grad"
-    - "university grad"
-    - "early career"
+    - "new.?grad"
+    - "university.?grad"
+    - "early.?career"
+    - "entry.?level"
     - "2027"
-    - "winter"
-    - "spring"
   exclude:
     - "senior"
     - "staff"
     - "principal"
     - "manager"
     - "phd"
+    - "lead"
     - "2025"
     - "2026"
+    - "2028"
+    - "2029"
+
+  # US-only: job must match at least one pattern (empty location passes through).
+  location_include:
+    - "united states"
+    - "\\busa?\\b"
+    - "remote"
+    # US state abbreviation after a comma: ", CA" / ", NY" etc.
+    - ",\\s*(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|or|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|dc)\\b"
+    # Common US cities (no state needed to identify them)
+    - "new york|san francisco|seattle|austin|boston|chicago|los angeles|denver|atlanta|portland|dallas|san jose|san diego|menlo park|mountain view|palo alto|bellevue|redmond"
 
 email:
-  from: "youraddress@gmail.com"
-  to: "youraddress@gmail.com"
+  from: "eric.sheng495@gmail.com"
+  to: "eric.sheng495@gmail.com"
   smtp_host: "smtp.gmail.com"
   smtp_port: 465
 
-# Supported types: greenhouse, lever, ashby, workday
-# token = the slug in the company's job board URL:
-#   boards.greenhouse.io/<token>
-#   jobs.lever.co/<token>
-#   jobs.ashbyhq.com/<token>
+# Supported types: greenhouse, lever, ashby, workday, google
+# token = the slug in the company's job board URL
 companies:
   - name: Stripe
     type: greenhouse
@@ -41,13 +50,25 @@ companies:
     type: greenhouse
     token: andurilindustries
 
+  - name: Datadog
+    type: greenhouse
+    token: datadog
+
+  - name: Pinterest
+    type: greenhouse
+    token: pinterest
+
+  - name: MongoDB
+    type: greenhouse
+    token: mongodb
+
   - name: Ramp
     type: ashby
     token: ramp
 
   - name: Snap
     type: workday
-    host: wd1.myworkdayjobs.com          # verify: careers.snap.com redirects here
+    host: wd1.myworkdayjobs.com
     tenant: snapchat
     site: snap
     search: "software engineer"
@@ -58,3 +79,7 @@ companies:
     tenant: nvidia
     site: NVIDIAExternalCareerSite
     search: "new grad software"
+
+  - name: Google
+    type: google
+    search: "software engineer 2027"

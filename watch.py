@@ -35,6 +35,14 @@ def matches(job, filters):
         return False
     if any(re.search(p, text) for p in filters.get("exclude", [])):
         return False
+
+    loc_includes = filters.get("location_include", [])
+    if loc_includes:
+        loc = (job.get("location") or "").lower()
+        # empty location = can't determine, let it through
+        if loc and not any(re.search(p, loc) for p in loc_includes):
+            return False
+
     return True
 
 
