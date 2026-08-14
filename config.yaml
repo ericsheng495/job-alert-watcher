@@ -1,0 +1,60 @@
+# Title filters (case-insensitive regex).
+# A job matches if it hits at least one "include" and no "exclude".
+filters:
+  include:
+    - "new grad"
+    - "university grad"
+    - "early career"
+    - "2027"
+    - "winter"
+    - "spring"
+  exclude:
+    - "senior"
+    - "staff"
+    - "principal"
+    - "manager"
+    - "phd"
+    - "2025"
+    - "2026"
+
+email:
+  from: "youraddress@gmail.com"
+  to: "youraddress@gmail.com"
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 465
+
+# Supported types: greenhouse, lever, ashby, workday
+# token = the slug in the company's job board URL:
+#   boards.greenhouse.io/<token>
+#   jobs.lever.co/<token>
+#   jobs.ashbyhq.com/<token>
+companies:
+  - name: Stripe
+    type: greenhouse
+    token: stripe
+
+  - name: Databricks
+    type: greenhouse
+    token: databricks
+
+  - name: Anduril
+    type: greenhouse
+    token: andurilindustries
+
+  - name: Ramp
+    type: ashby
+    token: ramp
+
+  - name: Snap
+    type: workday
+    host: wd1.myworkdayjobs.com          # verify: careers.snap.com redirects here
+    tenant: snapchat
+    site: snap
+    search: "software engineer"
+
+  - name: NVIDIA
+    type: workday
+    host: nvidia.wd5.myworkdayjobs.com
+    tenant: nvidia
+    site: NVIDIAExternalCareerSite
+    search: "new grad software"
