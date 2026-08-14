@@ -69,7 +69,18 @@ def send_email(cfg, new_jobs):
 
 
 def main():
+    test_mode = "--test" in sys.argv
     cfg = load_config()
+
+    if test_mode:
+        fake_jobs = {
+            "Stripe": [{"title": "Software Engineer, New Grad 2027", "location": "San Francisco, CA", "url": "https://stripe.com/jobs/example"}],
+            "Google": [{"title": "Software Engineer, Early Career 2027", "location": "Mountain View, CA", "url": "https://careers.google.com/jobs/example"}],
+        }
+        send_email(cfg, fake_jobs)
+        print("Test email sent.")
+        return
+
     seen = load_seen()
     first_run = not SEEN_FILE.exists()
     new_jobs = {}

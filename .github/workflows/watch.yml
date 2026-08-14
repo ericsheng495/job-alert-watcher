@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
+    inputs:
+      test:
+        description: "Send a test email (yes/no)"
+        required: false
+        default: "no"
 
 permissions:
   contents: write
@@ -27,7 +32,7 @@ jobs:
       - name: Run watcher
         env:
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
-        run: python watch.py
+        run: python watch.py ${{ github.event.inputs.test == 'yes' && '--test' || '' }}
 
       - name: Persist seen state
         run: |
