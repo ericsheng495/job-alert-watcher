@@ -41,30 +41,37 @@ companies:
   - name: Stripe
     type: greenhouse
     token: stripe
+    domain: stripe.com
 
   - name: Databricks
     type: greenhouse
     token: databricks
+    domain: databricks.com
 
   - name: Anduril
     type: greenhouse
     token: andurilindustries
+    domain: anduril.com
 
   - name: Datadog
     type: greenhouse
     token: datadog
+    domain: datadoghq.com
 
   - name: Pinterest
     type: greenhouse
     token: pinterest
+    domain: pinterest.com
 
   - name: MongoDB
     type: greenhouse
     token: mongodb
+    domain: mongodb.com
 
   - name: Ramp
     type: ashby
     token: ramp
+    domain: ramp.com
 
   - name: Snap
     type: workday
@@ -72,6 +79,7 @@ companies:
     tenant: snapchat
     site: snap
     search: "software engineer"
+    domain: snap.com
 
   - name: NVIDIA
     type: workday
@@ -79,7 +87,9 @@ companies:
     tenant: nvidia
     site: NVIDIAExternalCareerSite
     search: "new grad software"
+    domain: nvidia.com
 
   - name: Google
     type: google
     search: "software engineer 2027"
+    domain: google.com

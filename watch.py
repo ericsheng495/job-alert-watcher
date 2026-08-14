@@ -51,7 +51,7 @@ def short_title(title):
     return re.sub(r"^Software Engineer,?\s*", "", title, flags=re.IGNORECASE).strip()
 
 
-def build_html(new_jobs):
+def build_html(new_jobs, domains):
     all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
     total = len(all_jobs)
 
@@ -67,6 +67,12 @@ def build_html(new_jobs):
 
     job_cards = ""
     for company, jobs in new_jobs.items():
+        domain = domains.get(company, "")
+        logo_html = (
+            f'<img src="https://logo.clearbit.com/{domain}" width="28" height="28" '
+            f'alt="{company}" style="border-radius:6px;vertical-align:middle;margin-right:10px;display:inline-block;">'
+            if domain else ""
+        )
         for j in jobs:
             loc = j["location"] or ""
             loc_row = f'<tr><td style="padding:0 0 12px;font-size:13px;color:#6b7280;">{loc}</td></tr>' if loc else ""
@@ -74,7 +80,9 @@ def build_html(new_jobs):
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;">
       <tr><td style="padding:20px 24px;">
         <table width="100%" cellpadding="0" cellspacing="0">
-          <tr><td style="padding:0 0 4px;font-size:11px;font-weight:600;color:#6b7280;letter-spacing:0.08em;text-transform:uppercase;">{company}</td></tr>
+          <tr><td style="padding:0 0 10px;">
+            {logo_html}<span style="font-size:11px;font-weight:600;color:#6b7280;letter-spacing:0.08em;text-transform:uppercase;vertical-align:middle;">{company}</span>
+          </td></tr>
           <tr><td style="padding:0 0 8px;font-size:16px;font-weight:600;color:#111827;line-height:1.4;">{j['title']}</td></tr>
           {loc_row}
           <tr><td>
@@ -127,7 +135,8 @@ def build_plain(new_jobs):
     return "\n".join(lines)
 
 
-def send_email(cfg, new_jobs):
+def send_email(cfg, new_jobs, domains=None):
+    domains = domains or {}
     all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
     total = len(all_jobs)
     if total == 1:
@@ -143,7 +152,7 @@ def send_email(cfg, new_jobs):
     msg["From"] = f"Job Alert Bot <{cfg['email']['from']}>"
     msg["To"] = cfg["email"]["to"]
     msg.attach(MIMEText(build_plain(new_jobs), "plain"))
-    msg.attach(MIMEText(build_html(new_jobs), "html"))
+    msg.attach(MIMEText(build_html(new_jobs, domains), "html"))
 
     password = os.environ["EMAIL_APP_PASSWORD"]
     with smtplib.SMTP_SSL(cfg["email"]["smtp_host"], cfg["email"]["smtp_port"]) as s:
@@ -155,12 +164,14 @@ def main():
     test_mode = "--test" in sys.argv
     cfg = load_config()
 
+    domains = {c["name"]: c.get("domain", "") for c in cfg["companies"]}
+
     if test_mode:
         fake_jobs = {
             "Stripe": [{"title": "Software Engineer, New Grad 2027", "location": "San Francisco, CA", "url": "https://stripe.com/jobs/example"}],
             "Google": [{"title": "Software Engineer, Early Career 2027", "location": "Mountain View, CA", "url": "https://careers.google.com/jobs/example"}],
         }
-        send_email(cfg, fake_jobs)
+        send_email(cfg, fake_jobs, domains)
         print("Test email sent.")
         return
 
@@ -191,7 +202,7 @@ def main():
         return
 
     if new_jobs:
-        send_email(cfg, new_jobs)
+        send_email(cfg, new_jobs, domains)
         for company, jobs in new_jobs.items():
             for j in jobs:
                 print(f"[new] {company}: {j['title']} -> {j['url']}")
