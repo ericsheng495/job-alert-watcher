@@ -29,6 +29,8 @@ filters:
     # Common US cities (no state needed to identify them)
     - "new york|san francisco|seattle|austin|boston|chicago|los angeles|denver|atlanta|portland|dallas|san jose|san diego|menlo park|mountain view|palo alto|bellevue|redmond"
 
+dashboard_url: "https://ericsheng495.github.io/job-alert-watcher/"
+
 email:
   from: "eric.sheng495@gmail.com"
   to: "eric.sheng495@gmail.com"

@@ -3,6 +3,7 @@ import os
 import re
 import smtplib
 import sys
+from datetime import datetime, timezone
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -15,6 +16,8 @@ from sources import fetch_company
 
 ROOT = Path(__file__).parent
 SEEN_FILE = ROOT / "seen.json"
+JOBS_FILE = ROOT / "jobs.json"
+DASHBOARD_FILE = ROOT / "index.html"
 LOGO_HEADERS = {"User-Agent": "Mozilla/5.0 (job-alert-watcher)"}
 
 
@@ -33,20 +36,27 @@ def save_seen(seen):
     SEEN_FILE.write_text(json.dumps(sorted(seen), indent=0))
 
 
+def load_jobs():
+    if JOBS_FILE.exists():
+        return json.loads(JOBS_FILE.read_text())
+    return []
+
+
+def save_jobs(jobs):
+    JOBS_FILE.write_text(json.dumps(jobs, indent=2))
+
+
 def matches(job, filters):
     text = job["title"].lower()
     if not any(re.search(p, text) for p in filters["include"]):
         return False
     if any(re.search(p, text) for p in filters.get("exclude", [])):
         return False
-
     loc_includes = filters.get("location_include", [])
     if loc_includes:
         loc = (job.get("location") or "").lower()
-        # empty location = can't determine, let it through
         if loc and not any(re.search(p, loc) for p in loc_includes):
             return False
-
     return True
 
 
@@ -54,10 +64,10 @@ def short_title(title):
     return re.sub(r"^Software Engineer,?\s*", "", title, flags=re.IGNORECASE).strip()
 
 
-def fetch_logos(new_jobs, domains):
-    """Download logos and return {company: (cid, image_bytes)}. Failures are silently skipped."""
+def fetch_logos(companies, domains):
+    """Download logos for a list of company names. Returns {company: (cid, bytes)}."""
     logos = {}
-    for company in new_jobs:
+    for company in companies:
         domain = domains.get(company, "")
         if not domain:
             continue
@@ -71,7 +81,135 @@ def fetch_logos(new_jobs, domains):
     return logos
 
 
-def build_html(new_jobs, logos):
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
+def build_dashboard(all_jobs, domains):
+    updated = datetime.now(timezone.utc).strftime("%b %d, %Y at %H:%M UTC")
+    companies = sorted({j["company"] for j in all_jobs})
+    total = len(all_jobs)
+
+    filter_btns = '<button onclick="filter(\'\')" class="chip active" id="chip-all">All</button>\n'
+    for c in companies:
+        cid = re.sub(r"[^a-z0-9]", "", c.lower())
+        filter_btns += f'    <button onclick="filter(\'{cid}\')" class="chip" id="chip-{cid}">{c}</button>\n'
+
+    cards = ""
+    for j in all_jobs:
+        company = j["company"]
+        domain = domains.get(company, "")
+        logo_url = f"https://logo.clearbit.com/{domain}" if domain else ""
+        logo_img = (f'<img src="{logo_url}" onerror="this.style.display=\'none\'" '
+                    f'alt="{company}" class="logo">') if logo_url else ""
+        cid = re.sub(r"[^a-z0-9]", "", company.lower())
+        loc = j.get("location") or ""
+        date = j.get("seen_at", "")[:10]
+        cards += f"""
+      <div class="card" data-company="{cid}">
+        <div class="card-header">
+          {logo_img}
+          <span class="company-name">{company}</span>
+          <span class="date">{date}</span>
+        </div>
+        <div class="title">{j['title']}</div>
+        {"f'<div class=\"location\">{loc}</div>'" if loc else ""}
+        <a href="{j['url']}" target="_blank" class="apply-btn">View Posting</a>
+      </div>"""
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2027 Job Tracker</title>
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #f5f5f5; color: #111827; }}
+
+    header {{ background: #fff; border-bottom: 1px solid #e5e7eb; padding: 20px 32px; display: flex; align-items: baseline; gap: 16px; }}
+    header h1 {{ font-size: 18px; font-weight: 700; }}
+    header .meta {{ font-size: 13px; color: #6b7280; }}
+    header .stats {{ margin-left: auto; font-size: 13px; color: #6b7280; }}
+
+    .filters {{ padding: 20px 32px 0; display: flex; gap: 8px; flex-wrap: wrap; }}
+    .chip {{ padding: 6px 14px; border-radius: 999px; border: 1px solid #d1d5db; background: #fff; font-size: 13px; color: #374151; cursor: pointer; transition: all 0.15s; }}
+    .chip:hover {{ border-color: #111827; color: #111827; }}
+    .chip.active {{ background: #111827; color: #fff; border-color: #111827; }}
+
+    .search-wrap {{ padding: 16px 32px; }}
+    input[type=search] {{ width: 100%; max-width: 360px; padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; outline: none; background: #fff; }}
+    input[type=search]:focus {{ border-color: #111827; }}
+
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; padding: 0 32px 40px; }}
+
+    .card {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 8px; transition: box-shadow 0.15s; }}
+    .card:hover {{ box-shadow: 0 4px 12px rgba(0,0,0,0.08); }}
+    .card.hidden {{ display: none; }}
+
+    .card-header {{ display: flex; align-items: center; gap: 8px; }}
+    .logo {{ width: 20px; height: 20px; border-radius: 4px; object-fit: contain; }}
+    .company-name {{ font-size: 11px; font-weight: 600; color: #6b7280; letter-spacing: 0.06em; text-transform: uppercase; flex: 1; }}
+    .date {{ font-size: 11px; color: #9ca3af; }}
+
+    .title {{ font-size: 15px; font-weight: 600; color: #111827; line-height: 1.4; }}
+    .location {{ font-size: 13px; color: #6b7280; }}
+
+    .apply-btn {{ margin-top: 4px; display: inline-block; padding: 7px 16px; background: #111827; color: #fff; border-radius: 5px; font-size: 13px; font-weight: 500; text-decoration: none; align-self: flex-start; }}
+    .apply-btn:hover {{ background: #1f2937; }}
+
+    #empty {{ display: none; padding: 48px 32px; text-align: center; color: #9ca3af; font-size: 14px; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>2027 Job Tracker</h1>
+    <span class="meta">New Grad &amp; Intern roles</span>
+    <span class="stats" id="count">{total} postings &nbsp;·&nbsp; {len(companies)} companies &nbsp;·&nbsp; Updated {updated}</span>
+  </header>
+
+  <div class="filters">
+    {filter_btns}
+  </div>
+
+  <div class="search-wrap">
+    <input type="search" id="search" placeholder="Search roles..." oninput="applyFilters()">
+  </div>
+
+  <div class="grid" id="grid">
+    {cards}
+  </div>
+  <div id="empty">No matching postings.</div>
+
+  <script>
+    let activeCompany = '';
+
+    function filter(company) {{
+      activeCompany = company;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      document.getElementById('chip-' + (company || 'all')).classList.add('active');
+      applyFilters();
+    }}
+
+    function applyFilters() {{
+      const q = document.getElementById('search').value.toLowerCase();
+      let visible = 0;
+      document.querySelectorAll('.card').forEach(card => {{
+        const matchCompany = !activeCompany || card.dataset.company === activeCompany;
+        const matchSearch = !q || card.textContent.toLowerCase().includes(q);
+        card.classList.toggle('hidden', !(matchCompany && matchSearch));
+        if (matchCompany && matchSearch) visible++;
+      }});
+      document.getElementById('count').textContent =
+        visible + ' postings · {len(companies)} companies · Updated {updated}';
+      document.getElementById('empty').style.display = visible ? 'none' : 'block';
+    }}
+  </script>
+</body>
+</html>"""
+
+
+# ── Email ──────────────────────────────────────────────────────────────────────
+
+def build_html(new_jobs, logos, dashboard_url):
     all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
     total = len(all_jobs)
 
@@ -111,30 +249,29 @@ def build_html(new_jobs, logos):
       </td></tr>
     </table>"""
 
+    dashboard_row = f"""
+        <tr><td style="padding:20px 0 0;border-top:1px solid #e5e7eb;">
+          <a href="{dashboard_url}" style="font-size:13px;color:#6b7280;text-decoration:none;">
+            View all tracked postings on the dashboard &rarr;
+          </a>
+        </td></tr>""" if dashboard_url else ""
+
     return f"""<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
-
-        <!-- Header -->
         <tr><td style="padding:0 0 20px;">
           <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#6b7280;letter-spacing:0.08em;text-transform:uppercase;">Job Alert</p>
           <p style="margin:0;font-size:20px;font-weight:700;color:#111827;line-height:1.3;">{header_title}</p>
         </td></tr>
-
-        <!-- Divider -->
         <tr><td style="padding:0 0 20px;"><div style="height:1px;background:#e5e7eb;"></div></td></tr>
-
-        <!-- Job cards -->
         <tr><td>{job_cards}</td></tr>
-
-        <!-- Footer -->
+        {dashboard_row}
         <tr><td style="padding:24px 0 0;">
           <p style="margin:0;font-size:12px;color:#9ca3af;">Checks every 30 minutes &nbsp;·&nbsp; Watching for 2027 New Grad &amp; Intern roles</p>
         </td></tr>
-
       </table>
     </td></tr>
   </table>
@@ -142,7 +279,7 @@ def build_html(new_jobs, logos):
 </html>"""
 
 
-def build_plain(new_jobs):
+def build_plain(new_jobs, dashboard_url):
     lines = []
     for company, jobs in new_jobs.items():
         lines.append(f"== {company} ==")
@@ -151,6 +288,8 @@ def build_plain(new_jobs):
             lines.append(f"  {j['title']}{loc}")
             lines.append(f"  {j['url']}")
         lines.append("")
+    if dashboard_url:
+        lines.append(f"All postings: {dashboard_url}")
     return "\n".join(lines)
 
 
@@ -167,17 +306,17 @@ def send_email(cfg, new_jobs, domains=None):
         first_company, first_job = all_jobs[0]
         subject = f"{short_title(first_job['title'])} at {first_company} + {total - 1} more"
 
-    logos = fetch_logos(new_jobs, domains)
+    dashboard_url = cfg.get("dashboard_url", "")
+    logos = fetch_logos(list(new_jobs.keys()), domains)
 
-    # multipart/alternative > [plain, multipart/related > [html, inline images]]
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Job Alert Bot <{cfg['email']['from']}>"
     msg["To"] = cfg["email"]["to"]
-    msg.attach(MIMEText(build_plain(new_jobs), "plain"))
+    msg.attach(MIMEText(build_plain(new_jobs, dashboard_url), "plain"))
 
     related = MIMEMultipart("related")
-    related.attach(MIMEText(build_html(new_jobs, logos), "html"))
+    related.attach(MIMEText(build_html(new_jobs, logos, dashboard_url), "html"))
     for company, (cid, img_bytes) in logos.items():
         img = MIMEImage(img_bytes)
         img.add_header("Content-ID", f"<{cid}>")
@@ -191,10 +330,11 @@ def send_email(cfg, new_jobs, domains=None):
         s.send_message(msg)
 
 
+# ── Main ───────────────────────────────────────────────────────────────────────
+
 def main():
     test_mode = "--test" in sys.argv
     cfg = load_config()
-
     domains = {c["name"]: c.get("domain", "") for c in cfg["companies"]}
 
     if test_mode:
@@ -207,8 +347,11 @@ def main():
         return
 
     seen = load_seen()
+    all_matched = load_jobs()
+    tracked_ids = {j["id"] for j in all_matched}
     first_run = not SEEN_FILE.exists()
     new_jobs = {}
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     for company in cfg["companies"]:
         try:
@@ -223,12 +366,23 @@ def main():
             seen.add(job["id"])
             if matches(job, cfg["filters"]):
                 new_jobs.setdefault(company["name"], []).append(job)
+                if job["id"] not in tracked_ids:
+                    all_matched.insert(0, {
+                        "id": job["id"],
+                        "company": company["name"],
+                        "title": job["title"],
+                        "location": job.get("location", ""),
+                        "url": job["url"],
+                        "seen_at": now,
+                    })
 
     save_seen(seen)
+    save_jobs(all_matched)
+    DASHBOARD_FILE.write_text(build_dashboard(all_matched, domains))
 
     if first_run:
         total = sum(len(v) for v in new_jobs.values())
-        print(f"First run — baselined {len(seen)} postings ({total} would have matched). No email sent.")
+        print(f"First run — baselined {len(seen)} postings ({total} matched). Dashboard generated.")
         return
 
     if new_jobs:

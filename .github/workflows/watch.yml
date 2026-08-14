@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: job-watch
@@ -34,10 +36,10 @@ jobs:
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
         run: python watch.py ${{ github.event.inputs.test == 'yes' && '--test' || '' }}
 
-      - name: Persist seen state
+      - name: Persist state and dashboard
         run: |
           git config user.name "job-watch-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add seen.json
-          git diff --cached --quiet || git commit -m "update seen state"
+          git add seen.json jobs.json index.html
+          git diff --cached --quiet || git commit -m "update job board"
           git push
