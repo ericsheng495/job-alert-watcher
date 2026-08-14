@@ -18,6 +18,24 @@ filters:
     - "2026"
     - "2028"
     - "2029"
+    # non-SWE roles
+    - "electrical"
+    - "mechanical"
+    - "manufacturing"
+    - "hardware"
+    - "product manager"
+    - "program manager"
+    - "data scientist"
+    - "data analyst"
+    - "finance"
+    - "accounting"
+    - "marketing"
+    - "recruiter"
+    - "sales"
+    - "legal"
+    - "operations"
+    - "designer"
+    - "ux"
 
   # US-only: job must match at least one pattern (empty location passes through).
   location_include:
