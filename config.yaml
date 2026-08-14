@@ -50,10 +50,6 @@ companies:
     token: databricks
     domain: databricks.com
 
-  - name: Anduril
-    type: greenhouse
-    token: andurilindustries
-    domain: anduril.com
 
   - name: Datadog
     type: greenhouse
