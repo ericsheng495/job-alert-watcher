@@ -129,9 +129,11 @@ def send_email(cfg, new_jobs):
     if total == 1:
         company, j = all_jobs[0]
         subject = f"{j['title']} at {company}"
+    elif total <= 3:
+        subject = "  ·  ".join(f"{j['title']} at {company}" for company, j in all_jobs)
     else:
-        companies = ", ".join(new_jobs.keys())
-        subject = f"{total} new roles — {companies}"
+        first_company, first_job = all_jobs[0]
+        subject = f"{first_job['title']} at {first_company} + {total - 1} more"
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Job Alert Bot <{cfg['email']['from']}>"
