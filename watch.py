@@ -47,16 +47,20 @@ def matches(job, filters):
     return True
 
 
+def short_title(title):
+    return re.sub(r"^Software Engineer,?\s*", "", title, flags=re.IGNORECASE).strip()
+
+
 def build_html(new_jobs):
     all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
     total = len(all_jobs)
 
-    # Header summary: list exact titles
+    # Header summary: list exact titles (without "Software Engineer," prefix)
     if total == 1:
         company, j = all_jobs[0]
-        header_title = f"{j['title']} at {company}"
+        header_title = f"{short_title(j['title'])} at {company}"
     elif total <= 3:
-        header_title = " &nbsp;·&nbsp; ".join(f"{j['title']} at {company}" for company, j in all_jobs)
+        header_title = " &nbsp;·&nbsp; ".join(f"{short_title(j['title'])} at {company}" for company, j in all_jobs)
     else:
         companies = list(new_jobs.keys())
         header_title = f"{total} new roles at {', '.join(companies[:3])}{'&hellip;' if len(companies) > 3 else ''}"
@@ -128,12 +132,12 @@ def send_email(cfg, new_jobs):
     total = len(all_jobs)
     if total == 1:
         company, j = all_jobs[0]
-        subject = f"{j['title']} at {company}"
+        subject = f"{short_title(j['title'])} at {company}"
     elif total <= 3:
-        subject = "  ·  ".join(f"{j['title']} at {company}" for company, j in all_jobs)
+        subject = "  ·  ".join(f"{short_title(j['title'])} at {company}" for company, j in all_jobs)
     else:
         first_company, first_job = all_jobs[0]
-        subject = f"{first_job['title']} at {first_company} + {total - 1} more"
+        subject = f"{short_title(first_job['title'])} at {first_company} + {total - 1} more"
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Job Alert Bot <{cfg['email']['from']}>"
