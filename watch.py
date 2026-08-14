@@ -3,16 +3,19 @@ import os
 import re
 import smtplib
 import sys
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
+import requests
 import yaml
 
 from sources import fetch_company
 
 ROOT = Path(__file__).parent
 SEEN_FILE = ROOT / "seen.json"
+LOGO_HEADERS = {"User-Agent": "Mozilla/5.0 (job-alert-watcher)"}
 
 
 def load_config():
@@ -51,11 +54,27 @@ def short_title(title):
     return re.sub(r"^Software Engineer,?\s*", "", title, flags=re.IGNORECASE).strip()
 
 
-def build_html(new_jobs, domains):
+def fetch_logos(new_jobs, domains):
+    """Download logos and return {company: (cid, image_bytes)}. Failures are silently skipped."""
+    logos = {}
+    for company in new_jobs:
+        domain = domains.get(company, "")
+        if not domain:
+            continue
+        try:
+            r = requests.get(f"https://logo.clearbit.com/{domain}", headers=LOGO_HEADERS, timeout=5)
+            if r.ok and r.content:
+                cid = re.sub(r"[^a-z0-9]", "", company.lower())
+                logos[company] = (cid, r.content)
+        except Exception:
+            pass
+    return logos
+
+
+def build_html(new_jobs, logos):
     all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
     total = len(all_jobs)
 
-    # Header summary: list exact titles (without "Software Engineer," prefix)
     if total == 1:
         company, j = all_jobs[0]
         header_title = f"{short_title(j['title'])} at {company}"
@@ -67,11 +86,11 @@ def build_html(new_jobs, domains):
 
     job_cards = ""
     for company, jobs in new_jobs.items():
-        domain = domains.get(company, "")
+        cid = logos[company][0] if company in logos else None
         logo_html = (
-            f'<img src="https://logo.clearbit.com/{domain}" width="28" height="28" '
-            f'alt="{company}" style="border-radius:6px;vertical-align:middle;margin-right:10px;display:inline-block;">'
-            if domain else ""
+            f'<img src="cid:{cid}" width="24" height="24" alt="" '
+            f'style="border-radius:4px;vertical-align:middle;margin-right:8px;display:inline-block;">'
+            if cid else ""
         )
         for j in jobs:
             loc = j["location"] or ""
@@ -147,12 +166,24 @@ def send_email(cfg, new_jobs, domains=None):
     else:
         first_company, first_job = all_jobs[0]
         subject = f"{short_title(first_job['title'])} at {first_company} + {total - 1} more"
+
+    logos = fetch_logos(new_jobs, domains)
+
+    # multipart/alternative > [plain, multipart/related > [html, inline images]]
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Job Alert Bot <{cfg['email']['from']}>"
     msg["To"] = cfg["email"]["to"]
     msg.attach(MIMEText(build_plain(new_jobs), "plain"))
-    msg.attach(MIMEText(build_html(new_jobs, domains), "html"))
+
+    related = MIMEMultipart("related")
+    related.attach(MIMEText(build_html(new_jobs, logos), "html"))
+    for company, (cid, img_bytes) in logos.items():
+        img = MIMEImage(img_bytes)
+        img.add_header("Content-ID", f"<{cid}>")
+        img.add_header("Content-Disposition", "inline")
+        related.attach(img)
+    msg.attach(related)
 
     password = os.environ["EMAIL_APP_PASSWORD"]
     with smtplib.SMTP_SSL(cfg["email"]["smtp_host"], cfg["email"]["smtp_port"]) as s:
@@ -196,7 +227,6 @@ def main():
     save_seen(seen)
 
     if first_run:
-        # baseline run: record everything currently posted, don't spam
         total = sum(len(v) for v in new_jobs.values())
         print(f"First run — baselined {len(seen)} postings ({total} would have matched). No email sent.")
         return
