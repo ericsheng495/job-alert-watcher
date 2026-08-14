@@ -9,6 +9,10 @@ on:
         description: "Send a test email (yes/no)"
         required: false
         default: "no"
+      backfill:
+        description: "Backfill jobs.json from current postings (yes/no)"
+        required: false
+        default: "no"
 
 permissions:
   contents: write
@@ -34,7 +38,11 @@ jobs:
       - name: Run watcher
         env:
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
-        run: python watch.py ${{ github.event.inputs.test == 'yes' && '--test' || '' }}
+        run: |
+          ARGS=""
+          [ "${{ github.event.inputs.test }}" = "yes" ] && ARGS="$ARGS --test"
+          [ "${{ github.event.inputs.backfill }}" = "yes" ] && ARGS="$ARGS --backfill"
+          python watch.py $ARGS
 
       - name: Persist state and dashboard
         run: |

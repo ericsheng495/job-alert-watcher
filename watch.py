@@ -352,8 +352,39 @@ def send_email(cfg, new_jobs, domains=None):
 
 def main():
     test_mode = "--test" in sys.argv
+    backfill_mode = "--backfill" in sys.argv
     cfg = load_config()
     domains = {c["name"]: c.get("domain", "") for c in cfg["companies"]}
+
+    if backfill_mode:
+        # Re-scan all companies and add any matching jobs to jobs.json/dashboard
+        # without touching seen.json or sending email.
+        all_matched = load_jobs()
+        tracked_ids = {j["id"] for j in all_matched}
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        added = 0
+        for company in cfg["companies"]:
+            try:
+                jobs = fetch_company(company)
+            except Exception as e:
+                print(f"[warn] {company['name']}: {e}", file=sys.stderr)
+                continue
+            for job in jobs:
+                if job["id"] not in tracked_ids and matches(job, cfg["filters"]):
+                    all_matched.insert(0, {
+                        "id": job["id"],
+                        "company": company["name"],
+                        "title": job["title"],
+                        "location": job.get("location", ""),
+                        "url": job["url"],
+                        "seen_at": now,
+                    })
+                    tracked_ids.add(job["id"])
+                    added += 1
+        save_jobs(all_matched)
+        DASHBOARD_FILE.write_text(build_dashboard(all_matched, domains, cfg["companies"]))
+        print(f"Backfill complete — added {added} jobs, dashboard has {len(all_matched)} total.")
+        return
 
     if test_mode:
         fake_jobs = {
