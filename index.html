@@ -15,12 +15,13 @@
 
     .co-strip{background:#fff;border-bottom:1px solid #e5e7eb;padding:20px 32px 24px}
     .co-label{font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin-bottom:16px}
-    .co-grid{display:flex;gap:14px;flex-wrap:wrap}
-    .co-tile{display:flex;flex-direction:column;align-items:center;gap:6px;width:68px}
-    .co-tile-top{position:relative}
-    .co-logo{width:44px;height:44px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;background:#fff;display:block}
-    .co-badge{position:absolute;top:-5px;right:-7px;min-width:18px;height:18px;border-radius:999px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #f5f5f5}
-    .co-name{font-size:10px;color:#6b7280;text-align:center;line-height:1.3}
+    .co-grid{display:flex;gap:10px;flex-wrap:wrap}
+    .co-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;width:110px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;user-select:none}
+    .co-card:hover{border-color:#d1d5db;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .co-card.active{border-color:#111827;box-shadow:0 0 0 2px #111827}
+    .co-logo{width:40px;height:40px;border-radius:8px;object-fit:contain;background:#f9fafb;padding:4px}
+    .co-name{font-size:12px;font-weight:600;color:#374151;text-align:center;line-height:1.3}
+    .co-count{font-size:12px;text-align:center}
 
     .toolbar{padding:12px 32px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e5e7eb;background:#fff}
     .chip{padding:5px 12px;border-radius:999px;border:1px solid #d1d5db;background:#fff;font-size:12px;color:#374151;cursor:pointer;transition:all .12s}
@@ -48,12 +49,12 @@
   <header>
     <h1>2027 Job Tracker</h1>
     <span class="sub">New Grad &amp; Intern &nbsp;·&nbsp; <span id="count">13 postings</span></span>
-    <span class="updated">Updated Aug 14, 2026 at 22:40 UTC</span>
+    <span class="updated">Updated Aug 14, 2026 at 22:42 UTC</span>
   </header>
 
   <div class="co-strip">
     <div class="co-label">Watching 10 companies</div>
-    <div class="co-grid"><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/stripe.com" onerror="this.style.display='none'" alt="Stripe" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">Stripe</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/databricks.com" onerror="this.style.display='none'" alt="Databricks" class="co-logo"><span class="co-badge" style="background:#111827;color:#fff;">1</span></div><div class="co-name">Databricks</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/anduril.com" onerror="this.style.display='none'" alt="Anduril" class="co-logo"><span class="co-badge" style="background:#111827;color:#fff;">12</span></div><div class="co-name">Anduril</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/datadoghq.com" onerror="this.style.display='none'" alt="Datadog" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">Datadog</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/pinterest.com" onerror="this.style.display='none'" alt="Pinterest" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">Pinterest</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/mongodb.com" onerror="this.style.display='none'" alt="MongoDB" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">MongoDB</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/ramp.com" onerror="this.style.display='none'" alt="Ramp" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">Ramp</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/snap.com" onerror="this.style.display='none'" alt="Snap" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">Snap</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/nvidia.com" onerror="this.style.display='none'" alt="NVIDIA" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">NVIDIA</div></div><div class="co-tile"><div class="co-tile-top"><img src="https://logo.clearbit.com/google.com" onerror="this.style.display='none'" alt="Google" class="co-logo"><span class="co-badge" style="background:#e5e7eb;color:#9ca3af;">0</span></div><div class="co-name">Google</div></div></div>
+    <div class="co-grid" id="co-grid"><div class="co-card" onclick="filter('stripe')" id="co-stripe"><img src="https://logo.clearbit.com/stripe.com" onerror="this.style.display='none'" alt="Stripe" class="co-logo"><div class="co-name">Stripe</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('databricks')" id="co-databricks"><img src="https://logo.clearbit.com/databricks.com" onerror="this.style.display='none'" alt="Databricks" class="co-logo"><div class="co-name">Databricks</div><div class="co-count" style="color:#111827;font-weight:700;">1 job</div></div><div class="co-card" onclick="filter('anduril')" id="co-anduril"><img src="https://logo.clearbit.com/anduril.com" onerror="this.style.display='none'" alt="Anduril" class="co-logo"><div class="co-name">Anduril</div><div class="co-count" style="color:#111827;font-weight:700;">12 jobs</div></div><div class="co-card" onclick="filter('datadog')" id="co-datadog"><img src="https://logo.clearbit.com/datadoghq.com" onerror="this.style.display='none'" alt="Datadog" class="co-logo"><div class="co-name">Datadog</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('pinterest')" id="co-pinterest"><img src="https://logo.clearbit.com/pinterest.com" onerror="this.style.display='none'" alt="Pinterest" class="co-logo"><div class="co-name">Pinterest</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('mongodb')" id="co-mongodb"><img src="https://logo.clearbit.com/mongodb.com" onerror="this.style.display='none'" alt="MongoDB" class="co-logo"><div class="co-name">MongoDB</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('ramp')" id="co-ramp"><img src="https://logo.clearbit.com/ramp.com" onerror="this.style.display='none'" alt="Ramp" class="co-logo"><div class="co-name">Ramp</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('snap')" id="co-snap"><img src="https://logo.clearbit.com/snap.com" onerror="this.style.display='none'" alt="Snap" class="co-logo"><div class="co-name">Snap</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('nvidia')" id="co-nvidia"><img src="https://logo.clearbit.com/nvidia.com" onerror="this.style.display='none'" alt="NVIDIA" class="co-logo"><div class="co-name">NVIDIA</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div><div class="co-card" onclick="filter('google')" id="co-google"><img src="https://logo.clearbit.com/google.com" onerror="this.style.display='none'" alt="Google" class="co-logo"><div class="co-name">Google</div><div class="co-count" style="color:#9ca3af;font-weight:500;">0 jobs</div></div></div>
   </div>
 
   <div class="toolbar">
@@ -67,9 +68,12 @@
   <script>
     let active = '';
     function filter(c) {
+      if (active === c) c = '';  // click active card to deselect
       active = c;
       document.querySelectorAll('.chip').forEach(el => el.classList.remove('active'));
       document.getElementById('chip-' + (c || 'all')).classList.add('active');
+      document.querySelectorAll('.co-card').forEach(el => el.classList.remove('active'));
+      if (c) { const co = document.getElementById('co-' + c); if (co) co.classList.add('active'); }
       applyFilters();
     }
     function applyFilters() {
