@@ -65,7 +65,6 @@ def short_title(title):
 
 
 def fetch_logos(companies, domains):
-    """Download logos for a list of company names. Returns {company: (cid, bytes)}."""
     logos = {}
     for company in companies:
         domain = domains.get(company, "")
@@ -81,40 +80,61 @@ def fetch_logos(companies, domains):
     return logos
 
 
-# ── Dashboard ─────────────────────────────────────────────────────────────────
+# ── Dashboard ──────────────────────────────────────────────────────────────────
 
-def build_dashboard(all_jobs, domains):
+def build_dashboard(all_jobs, domains, watched_companies):
     updated = datetime.now(timezone.utc).strftime("%b %d, %Y at %H:%M UTC")
-    companies = sorted({j["company"] for j in all_jobs})
     total = len(all_jobs)
 
-    filter_btns = '<button onclick="filter(\'\')" class="chip active" id="chip-all">All</button>\n'
-    for c in companies:
+    counts = {}
+    for j in all_jobs:
+        counts[j["company"]] = counts.get(j["company"], 0) + 1
+
+    company_tiles = ""
+    for c in watched_companies:
+        domain = domains.get(c["name"], "")
+        logo_url = f"https://logo.clearbit.com/{domain}" if domain else ""
+        n = counts.get(c["name"], 0)
+        badge_style = "background:#111827;color:#fff;" if n > 0 else "background:#e5e7eb;color:#9ca3af;"
+        company_tiles += (
+            f'<div class="co-tile">'
+            f'<div class="co-tile-top">'
+            f'<img src="{logo_url}" onerror="this.style.display=\'none\'" alt="{c["name"]}" class="co-logo">'
+            f'<span class="co-badge" style="{badge_style}">{n}</span>'
+            f'</div>'
+            f'<div class="co-name">{c["name"]}</div>'
+            f'</div>'
+        )
+
+    matched_companies = sorted(counts.keys())
+    filter_btns = '<button onclick="filter(\'\')" class="chip active" id="chip-all">All</button> '
+    for c in matched_companies:
         cid = re.sub(r"[^a-z0-9]", "", c.lower())
-        filter_btns += f'    <button onclick="filter(\'{cid}\')" class="chip" id="chip-{cid}">{c}</button>\n'
+        filter_btns += f'<button onclick="filter(\'{cid}\')" class="chip" id="chip-{cid}">{c}</button> '
 
     cards = ""
     for j in all_jobs:
         company = j["company"]
         domain = domains.get(company, "")
         logo_url = f"https://logo.clearbit.com/{domain}" if domain else ""
-        logo_img = (f'<img src="{logo_url}" onerror="this.style.display=\'none\'" '
-                    f'alt="{company}" class="logo">') if logo_url else ""
         cid = re.sub(r"[^a-z0-9]", "", company.lower())
         loc = j.get("location") or ""
         date = j.get("seen_at", "")[:10]
-        cards += f"""
-      <div class="card" data-company="{cid}">
-        <div class="card-header">
-          {logo_img}
-          <span class="company-name">{company}</span>
-          <span class="date">{date}</span>
-        </div>
-        <div class="title">{j['title']}</div>
-        {"f'<div class=\"location\">{loc}</div>'" if loc else ""}
-        <a href="{j['url']}" target="_blank" class="apply-btn">View Posting</a>
-      </div>"""
+        loc_html = f'<div class="location">{loc}</div>' if loc else ""
+        cards += (
+            f'<div class="card" data-company="{cid}">'
+            f'<div class="card-header">'
+            f'<img src="{logo_url}" onerror="this.style.display=\'none\'" alt="{company}" class="logo">'
+            f'<span class="company-name">{company}</span>'
+            f'<span class="date">{date}</span>'
+            f'</div>'
+            f'<div class="title">{j["title"]}</div>'
+            f'{loc_html}'
+            f'<a href="{j["url"]}" target="_blank" class="apply-btn">View Posting</a>'
+            f'</div>'
+        )
 
+    n_watched = len(watched_companies)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -122,85 +142,83 @@ def build_dashboard(all_jobs, domains):
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>2027 Job Tracker</title>
   <style>
-    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #f5f5f5; color: #111827; }}
+    *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+    body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f5f5f5;color:#111827}}
 
-    header {{ background: #fff; border-bottom: 1px solid #e5e7eb; padding: 20px 32px; display: flex; align-items: baseline; gap: 16px; }}
-    header h1 {{ font-size: 18px; font-weight: 700; }}
-    header .meta {{ font-size: 13px; color: #6b7280; }}
-    header .stats {{ margin-left: auto; font-size: 13px; color: #6b7280; }}
+    header{{background:#fff;border-bottom:1px solid #e5e7eb;padding:18px 32px;display:flex;align-items:center;gap:12px}}
+    header h1{{font-size:16px;font-weight:700}}
+    .sub{{font-size:13px;color:#6b7280}}
+    .updated{{margin-left:auto;font-size:12px;color:#9ca3af}}
 
-    .filters {{ padding: 20px 32px 0; display: flex; gap: 8px; flex-wrap: wrap; }}
-    .chip {{ padding: 6px 14px; border-radius: 999px; border: 1px solid #d1d5db; background: #fff; font-size: 13px; color: #374151; cursor: pointer; transition: all 0.15s; }}
-    .chip:hover {{ border-color: #111827; color: #111827; }}
-    .chip.active {{ background: #111827; color: #fff; border-color: #111827; }}
+    .co-strip{{background:#fff;border-bottom:1px solid #e5e7eb;padding:20px 32px 24px}}
+    .co-label{{font-size:11px;font-weight:600;color:#9ca3af;letter-spacing:.07em;text-transform:uppercase;margin-bottom:16px}}
+    .co-grid{{display:flex;gap:14px;flex-wrap:wrap}}
+    .co-tile{{display:flex;flex-direction:column;align-items:center;gap:6px;width:68px}}
+    .co-tile-top{{position:relative}}
+    .co-logo{{width:44px;height:44px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;background:#fff;display:block}}
+    .co-badge{{position:absolute;top:-5px;right:-7px;min-width:18px;height:18px;border-radius:999px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #f5f5f5}}
+    .co-name{{font-size:10px;color:#6b7280;text-align:center;line-height:1.3}}
 
-    .search-wrap {{ padding: 16px 32px; }}
-    input[type=search] {{ width: 100%; max-width: 360px; padding: 8px 14px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; outline: none; background: #fff; }}
-    input[type=search]:focus {{ border-color: #111827; }}
+    .toolbar{{padding:12px 32px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e5e7eb;background:#fff}}
+    .chip{{padding:5px 12px;border-radius:999px;border:1px solid #d1d5db;background:#fff;font-size:12px;color:#374151;cursor:pointer;transition:all .12s}}
+    .chip:hover{{border-color:#111827}}
+    .chip.active{{background:#111827;color:#fff;border-color:#111827}}
+    input[type=search]{{margin-left:auto;padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;outline:none;width:200px}}
+    input[type=search]:focus{{border-color:#111827}}
 
-    .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; padding: 0 32px 40px; }}
-
-    .card {{ background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 8px; transition: box-shadow 0.15s; }}
-    .card:hover {{ box-shadow: 0 4px 12px rgba(0,0,0,0.08); }}
-    .card.hidden {{ display: none; }}
-
-    .card-header {{ display: flex; align-items: center; gap: 8px; }}
-    .logo {{ width: 20px; height: 20px; border-radius: 4px; object-fit: contain; }}
-    .company-name {{ font-size: 11px; font-weight: 600; color: #6b7280; letter-spacing: 0.06em; text-transform: uppercase; flex: 1; }}
-    .date {{ font-size: 11px; color: #9ca3af; }}
-
-    .title {{ font-size: 15px; font-weight: 600; color: #111827; line-height: 1.4; }}
-    .location {{ font-size: 13px; color: #6b7280; }}
-
-    .apply-btn {{ margin-top: 4px; display: inline-block; padding: 7px 16px; background: #111827; color: #fff; border-radius: 5px; font-size: 13px; font-weight: 500; text-decoration: none; align-self: flex-start; }}
-    .apply-btn:hover {{ background: #1f2937; }}
-
-    #empty {{ display: none; padding: 48px 32px; text-align: center; color: #9ca3af; font-size: 14px; }}
+    .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:20px 32px 48px}}
+    .card{{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s}}
+    .card:hover{{box-shadow:0 4px 14px rgba(0,0,0,.07)}}
+    .card.hidden{{display:none}}
+    .card-header{{display:flex;align-items:center;gap:8px}}
+    .logo{{width:18px;height:18px;border-radius:3px;object-fit:contain}}
+    .company-name{{font-size:11px;font-weight:600;color:#6b7280;letter-spacing:.06em;text-transform:uppercase;flex:1}}
+    .date{{font-size:11px;color:#d1d5db}}
+    .title{{font-size:14px;font-weight:600;color:#111827;line-height:1.4}}
+    .location{{font-size:12px;color:#9ca3af}}
+    .apply-btn{{margin-top:4px;display:inline-block;padding:6px 14px;background:#111827;color:#fff;border-radius:5px;font-size:12px;font-weight:500;text-decoration:none;align-self:flex-start}}
+    .apply-btn:hover{{background:#1f2937}}
+    #empty{{display:none;padding:48px 32px;text-align:center;color:#9ca3af;font-size:14px}}
   </style>
 </head>
 <body>
   <header>
     <h1>2027 Job Tracker</h1>
-    <span class="meta">New Grad &amp; Intern roles</span>
-    <span class="stats" id="count">{total} postings &nbsp;·&nbsp; {len(companies)} companies &nbsp;·&nbsp; Updated {updated}</span>
+    <span class="sub">New Grad &amp; Intern &nbsp;·&nbsp; <span id="count">{total} postings</span></span>
+    <span class="updated">Updated {updated}</span>
   </header>
 
-  <div class="filters">
-    {filter_btns}
+  <div class="co-strip">
+    <div class="co-label">Watching {n_watched} companies</div>
+    <div class="co-grid">{company_tiles}</div>
   </div>
 
-  <div class="search-wrap">
+  <div class="toolbar">
+    {filter_btns}
     <input type="search" id="search" placeholder="Search roles..." oninput="applyFilters()">
   </div>
 
-  <div class="grid" id="grid">
-    {cards}
-  </div>
-  <div id="empty">No matching postings.</div>
+  <div class="grid" id="grid">{cards}</div>
+  <div id="empty">No matching postings found.</div>
 
   <script>
-    let activeCompany = '';
-
-    function filter(company) {{
-      activeCompany = company;
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      document.getElementById('chip-' + (company || 'all')).classList.add('active');
+    let active = '';
+    function filter(c) {{
+      active = c;
+      document.querySelectorAll('.chip').forEach(el => el.classList.remove('active'));
+      document.getElementById('chip-' + (c || 'all')).classList.add('active');
       applyFilters();
     }}
-
     function applyFilters() {{
       const q = document.getElementById('search').value.toLowerCase();
-      let visible = 0;
+      let n = 0;
       document.querySelectorAll('.card').forEach(card => {{
-        const matchCompany = !activeCompany || card.dataset.company === activeCompany;
-        const matchSearch = !q || card.textContent.toLowerCase().includes(q);
-        card.classList.toggle('hidden', !(matchCompany && matchSearch));
-        if (matchCompany && matchSearch) visible++;
+        const ok = (!active || card.dataset.company === active) && (!q || card.textContent.toLowerCase().includes(q));
+        card.classList.toggle('hidden', !ok);
+        if (ok) n++;
       }});
-      document.getElementById('count').textContent =
-        visible + ' postings · {len(companies)} companies · Updated {updated}';
-      document.getElementById('empty').style.display = visible ? 'none' : 'block';
+      document.getElementById('count').textContent = n + ' postings';
+      document.getElementById('empty').style.display = n ? 'none' : 'block';
     }}
   </script>
 </body>
@@ -378,7 +396,7 @@ def main():
 
     save_seen(seen)
     save_jobs(all_matched)
-    DASHBOARD_FILE.write_text(build_dashboard(all_matched, domains))
+    DASHBOARD_FILE.write_text(build_dashboard(all_matched, domains, cfg["companies"]))
 
     if first_run:
         total = sum(len(v) for v in new_jobs.values())
