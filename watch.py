@@ -48,45 +48,65 @@ def matches(job, filters):
 
 
 def build_html(new_jobs):
-    total = sum(len(v) for v in new_jobs.values())
-    company_blocks = ""
+    all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
+    total = len(all_jobs)
+
+    # Header summary: list exact titles
+    if total == 1:
+        company, j = all_jobs[0]
+        header_title = f"{j['title']} at {company}"
+    elif total <= 3:
+        header_title = " &nbsp;·&nbsp; ".join(f"{j['title']} at {company}" for company, j in all_jobs)
+    else:
+        companies = list(new_jobs.keys())
+        header_title = f"{total} new roles at {', '.join(companies[:3])}{'&hellip;' if len(companies) > 3 else ''}"
+
+    job_cards = ""
     for company, jobs in new_jobs.items():
-        job_rows = ""
         for j in jobs:
-            loc = j["location"] or "Location not listed"
-            job_rows += f"""
-            <tr>
-              <td style="padding:12px 16px;border-bottom:1px solid #f0f0f0;">
-                <a href="{j['url']}" style="font-size:15px;font-weight:600;color:#1a1a2e;text-decoration:none;">{j['title']}</a>
-                <div style="margin-top:4px;font-size:13px;color:#666;">📍 {loc}</div>
-                <div style="margin-top:8px;">
-                  <a href="{j['url']}" style="display:inline-block;padding:6px 14px;background:#4f46e5;color:#fff;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">Apply Now →</a>
-                </div>
-              </td>
-            </tr>"""
-        company_blocks += f"""
-        <div style="margin-bottom:28px;">
-          <div style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:8px 8px 0 0;font-size:14px;font-weight:700;letter-spacing:0.5px;">{company}</div>
-          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e8e8e8;border-top:none;border-radius:0 0 8px 8px;background:#fff;">
-            {job_rows}
-          </table>
-        </div>"""
+            loc = j["location"] or ""
+            loc_row = f'<tr><td style="padding:0 0 12px;font-size:13px;color:#6b7280;">{loc}</td></tr>' if loc else ""
+            job_cards += f"""
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;background:#ffffff;border:1px solid #e5e7eb;border-radius:6px;">
+      <tr><td style="padding:20px 24px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr><td style="padding:0 0 4px;font-size:11px;font-weight:600;color:#6b7280;letter-spacing:0.08em;text-transform:uppercase;">{company}</td></tr>
+          <tr><td style="padding:0 0 8px;font-size:16px;font-weight:600;color:#111827;line-height:1.4;">{j['title']}</td></tr>
+          {loc_row}
+          <tr><td>
+            <a href="{j['url']}" style="display:inline-block;padding:8px 18px;background:#111827;color:#ffffff;border-radius:4px;font-size:13px;font-weight:500;text-decoration:none;letter-spacing:0.01em;">View Posting</a>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>"""
 
     return f"""<!DOCTYPE html>
 <html>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <div style="max-width:600px;margin:32px auto;padding:0 16px;">
-    <div style="background:#1a1a2e;border-radius:12px 12px 0 0;padding:24px 28px;">
-      <div style="font-size:22px;font-weight:700;color:#fff;">🎯 Job Alert</div>
-      <div style="margin-top:6px;font-size:14px;color:#a0a0c0;">{total} new matching posting{"s" if total != 1 else ""} · New Grad &amp; Intern 2027</div>
-    </div>
-    <div style="background:#f9f9fb;border:1px solid #e8e8e8;border-top:none;border-radius:0 0 12px 12px;padding:24px 20px;">
-      {company_blocks}
-      <div style="text-align:center;font-size:12px;color:#aaa;margin-top:8px;">
-        Sent by job-alert-watcher · Checks every 30 min
-      </div>
-    </div>
-  </div>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+
+        <!-- Header -->
+        <tr><td style="padding:0 0 20px;">
+          <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#6b7280;letter-spacing:0.08em;text-transform:uppercase;">Job Alert</p>
+          <p style="margin:0;font-size:20px;font-weight:700;color:#111827;line-height:1.3;">{header_title}</p>
+        </td></tr>
+
+        <!-- Divider -->
+        <tr><td style="padding:0 0 20px;"><div style="height:1px;background:#e5e7eb;"></div></td></tr>
+
+        <!-- Job cards -->
+        <tr><td>{job_cards}</td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:24px 0 0;">
+          <p style="margin:0;font-size:12px;color:#9ca3af;">Checks every 30 minutes &nbsp;·&nbsp; Watching for 2027 New Grad &amp; Intern roles</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>"""
 
@@ -104,9 +124,16 @@ def build_plain(new_jobs):
 
 
 def send_email(cfg, new_jobs):
-    total = sum(len(v) for v in new_jobs.values())
+    all_jobs = [(company, j) for company, jobs in new_jobs.items() for j in jobs]
+    total = len(all_jobs)
+    if total == 1:
+        company, j = all_jobs[0]
+        subject = f"{j['title']} at {company}"
+    else:
+        companies = ", ".join(new_jobs.keys())
+        subject = f"{total} new roles — {companies}"
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"🎯 {total} new job posting{'s' if total != 1 else ''} matched"
+    msg["Subject"] = subject
     msg["From"] = f"Job Alert Bot <{cfg['email']['from']}>"
     msg["To"] = cfg["email"]["to"]
     msg.attach(MIMEText(build_plain(new_jobs), "plain"))
