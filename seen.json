@@ -3645,6 +3645,8 @@
 "greenhouse:datadog:8139277",
 "greenhouse:datadog:8139279",
 "greenhouse:datadog:8139662",
+"greenhouse:datadog:8141240",
+"greenhouse:datadog:8141243",
 "greenhouse:mongodb:5050863",
 "greenhouse:mongodb:6275509",
 "greenhouse:mongodb:6381035",
@@ -4885,6 +4887,7 @@
 "greenhouse:stripe:8126047",
 "greenhouse:stripe:8127890",
 "greenhouse:stripe:8127942",
+"greenhouse:stripe:8128011",
 "greenhouse:stripe:8128496",
 "greenhouse:stripe:8128499",
 "greenhouse:stripe:8128552",
@@ -4948,5 +4951,6 @@
 "workday:nvidia:/job/US-TX-Austin/ASIC-Verification-Engineer---New-College-Grad-2026_JR2012573",
 "workday:nvidia:/job/US-TX-Austin/Power-Methodology-and-Modeling-Engineer---New-College-Grad-2026_JR2017486-1",
 "workday:nvidia:/job/US-TX-Austin/Software-R-D-Engineer--VLSI-Physical-Design---New-College-Grad-2026_JR2019330",
+"workday:nvidia:/job/US-TX-Remote/Technical-Program-Manager--New-Product-Deployment-Readiness_JR2023168",
 "workday:nvidia:/job/US-WA-Redmond/Senior-Software-Engineer--SONiC---Networking_JR2022751"
 ]
