@@ -5072,6 +5072,7 @@
 "greenhouse:stripe:8119822",
 "greenhouse:stripe:8119834",
 "greenhouse:stripe:8119967",
+"greenhouse:stripe:8119970",
 "greenhouse:stripe:8120185",
 "greenhouse:stripe:8120494",
 "greenhouse:stripe:8120501",
@@ -5151,7 +5152,9 @@
 "greenhouse:stripe:8155164",
 "greenhouse:stripe:8156996",
 "greenhouse:stripe:8157577",
+"greenhouse:stripe:8158082",
 "workday:nvidia:",
+"workday:nvidia:/job/China-Shanghai/AI-Infrastructure-Software-Engineer---CosmosLab_JR2020792",
 "workday:nvidia:/job/China-Shanghai/Graphics-Tools-Software-Engineer_JR2017973",
 "workday:nvidia:/job/China-Shanghai/NVIDIA-2027-New-College-Graduate--GPU-Architecture-Engineering---China_JR2024108",
 "workday:nvidia:/job/China-Shanghai/NVIDIA-2027-New-College-Graduate--Software-Engineering---China_JR2024111",
@@ -5203,5 +5206,6 @@
 "workday:nvidia:/job/US-TX-Austin/Power-Methodology-and-Modeling-Engineer---New-College-Grad-2026_JR2017486-1",
 "workday:nvidia:/job/US-TX-Austin/Software-R-D-Engineer--VLSI-Physical-Design---New-College-Grad-2026_JR2019330",
 "workday:nvidia:/job/US-TX-Remote/Technical-Program-Manager--New-Product-Deployment-Readiness_JR2023168",
+"workday:nvidia:/job/US-WA-Redmond/Senior-Software-Engineer--Quantum-Applied-Research_JR2020378-1",
 "workday:nvidia:/job/US-WA-Redmond/Senior-Software-Engineer--SONiC---Networking_JR2022751"
 ]
