@@ -391,12 +391,19 @@ def main():
         return
 
     if test_mode:
-        fake_jobs = {
-            "Stripe": [{"title": "Software Engineer, New Grad 2027", "location": "San Francisco, CA", "url": "https://stripe.com/jobs/example"}],
-            "Google": [{"title": "Software Engineer, Early Career 2027", "location": "Mountain View, CA", "url": "https://careers.google.com/jobs/example"}],
+        # Both shapes, since they produce very different subjects and previews:
+        # a single posting, then a multi-company digest.
+        single = {
+            "Google": [{"title": "Software Engineering Intern, MS, Summer 2027", "location": "Mountain View, CA", "url": "https://careers.google.com/jobs/example"}],
         }
-        send_email(cfg, fake_jobs, domains)
-        print("Test email sent.")
+        digest = {
+            "Stripe": [{"title": "Software Engineer, New Grad 2027", "location": "San Francisco, CA", "url": "https://stripe.com/jobs/example"}],
+            "Google": [{"title": "Software Engineering Intern, MS, Summer 2027", "location": "Mountain View, CA", "url": "https://careers.google.com/jobs/example"}],
+            "Databricks": [{"title": "Software Development Engineer Intern (Summer 2027)", "location": "Seattle, WA", "url": "https://databricks.com/jobs/example"}],
+        }
+        for fake_jobs in (single, digest):
+            send_email(cfg, fake_jobs, domains)
+            print(f"Test email sent — subject: {build_subject(fake_jobs)}")
         return
 
     seen = load_seen()
