@@ -62,5 +62,12 @@ jobs:
             fi
 
             ARGS=""            # --test/--backfill only apply to the first scan
-            [ "$i" -lt "$SCANS" ] && sleep 600
+
+            # Must be an if, not `[ ... ] && sleep`: on the final pass the test
+            # is false, and as the step's last command that would exit 1.
+            if [ "$i" -lt "$SCANS" ]; then
+              sleep 600
+            fi
           done
+
+          echo "loop finished: $SCANS scans"
