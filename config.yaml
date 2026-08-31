@@ -131,3 +131,8 @@ companies:
     type: greenhouse
     token: reddit
     domain: reddit.com
+
+  - name: Mercor
+    type: ashby
+    token: mercor
+    domain: mercor.com
