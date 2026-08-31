@@ -23,7 +23,7 @@ filters:
     - "mechanical"
     - "manufacturing"
     - "hardware"
-    - "product manager"
+    - "product manage"
     - "program manager"
     - "data scientist"
     - "data analyst"
@@ -31,6 +31,8 @@ filters:
     - "accounting"
     - "marketing"
     - "recruiter"
+    - "customer support"
+    - "support representative"
     - "sales"
     - "legal"
     - "operations"
@@ -89,13 +91,6 @@ companies:
     token: ramp
     domain: ramp.com
 
-  - name: Snap
-    type: workday
-    host: wd1.myworkdayjobs.com
-    tenant: snapchat
-    site: snap
-    search: "software engineer"
-    domain: snap.com
 
   - name: NVIDIA
     type: workday
@@ -109,3 +104,30 @@ companies:
     type: google
     search: "software engineer 2027"
     domain: google.com
+
+  # --- interview targets ---
+  - name: Bloomberg
+    type: avature
+    host: bloomberg.avature.net
+    domain: bloomberg.com
+
+  - name: Uber
+    type: oracle
+    host: iaziqy.fa.ocs.oraclecloud.com
+    site: UberCareers
+    domain: uber.com
+
+  - name: DoorDash
+    type: greenhouse
+    token: doordashusa
+    domain: doordash.com
+
+  - name: Netflix
+    type: eightfold
+    host: explore.jobs.netflix.net
+    domain: netflix.com
+
+  - name: Reddit
+    type: greenhouse
+    token: reddit
+    domain: reddit.com

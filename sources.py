@@ -149,12 +149,89 @@ def fetch_google(company):
     return jobs
 
 
+def fetch_eightfold(company):
+    """Eightfold-hosted boards (Netflix). Public JSON, paginated by `start`."""
+    host=company["host"]; domain=company["domain"]
+    jobs=[]; start=0
+    while True:
+        url=(f"https://{host}/api/apply/v2/jobs?domain={domain}"
+             f"&start={start}&num=50&query={requests.utils.quote(company.get('search',''))}")
+        r=requests.get(url,headers={**HEADERS,"Accept":"application/json"},timeout=30)
+        r.raise_for_status(); d=r.json()
+        pos=d.get("positions") or []
+        if not pos: break
+        for p in pos:
+            pid=p.get("id")
+            jobs.append({"id":f"eightfold:{domain}:{pid}",
+                         "title":p.get("name",""),
+                         "location":p.get("location") or "; ".join(p.get("locations") or []),
+                         "url":p.get("canonicalPositionUrl") or f"https://{host}/careers/job/{pid}"})
+        start+=len(pos)
+        if start>=int(d.get("count") or 0) or start>600: break
+    return jobs
+
+def fetch_oracle(company):
+    """Oracle Recruiting Cloud (Uber). Public hcmRestApi, paginated by offset."""
+    host=company["host"]; site=company.get("site_number","CX_1"); path=company["site"]
+    jobs=[]; offset=0
+    while True:
+        url=(f"https://{host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions"
+             f"?onlyData=true&expand=requisitionList.secondaryLocations"
+             f"&finder=findReqs;siteNumber={site},facetsList=LOCATIONS;TITLES;CATEGORIES,"
+             f"limit=100,offset={offset},sortBy=POSTING_DATES_DESC")
+        r=requests.get(url,headers={**HEADERS,"Accept":"application/json"},timeout=30)
+        r.raise_for_status()
+        items=r.json().get("items") or []
+        rl=items[0].get("requisitionList",[]) if items else []
+        total=int(items[0].get("TotalJobsCount") or 0) if items else 0
+        if not rl: break
+        for j in rl:
+            jid=j.get("Id")
+            locs=[j.get("PrimaryLocation") or ""]+[s.get("Name","") for s in (j.get("secondaryLocations") or [])]
+            jobs.append({"id":f"oracle:{host}:{jid}","title":j.get("Title",""),
+                         "location":"; ".join([x for x in locs if x]),
+                         "url":f"https://{host}/hcmUI/CandidateExperience/en/sites/{path}/job/{jid}"})
+        offset+=len(rl)
+        if offset>=total or offset>700: break
+    return jobs
+
+JOB_RE=re.compile(
+    r'<h3 class="article__header__text__title[^"]*">\s*<a class="link" href="([^"]+/JobDetail/[^"]+)">\s*(.*?)\s*</a>\s*</h3>'
+    r'(.*?)</article>', re.S)
+TAG=re.compile(r'<[^>]+>')
+
+def fetch_avature(company):
+    """Avature-hosted boards (Bloomberg). Server-rendered HTML, paginated by jobOffset."""
+    base=company["host"]; jobs=[]; offset=0; seen=set()
+    while True:
+        url=f"https://{base}/careers/SearchJobs/?jobRecordsPerPage=20&jobOffset={offset}"
+        r=requests.get(url,headers=HEADERS,timeout=30); r.raise_for_status()
+        found=0
+        for m in JOB_RE.finditer(r.text):
+            href,title,rest=m.group(1),m.group(2),m.group(3)
+            jid=href.rstrip("/").split("/")[-1]
+            if jid in seen: continue
+            seen.add(jid); found+=1
+            sub=re.search(r'article__header__text__subtitle.*?>(.*?)</div>',rest,re.S)
+            loc=TAG.sub(" ",sub.group(1)) if sub else ""
+            jobs.append({"id":f"avature:{base}:{jid}",
+                         "title":TAG.sub("",title).strip(),
+                         "location":" ".join(loc.split())[:200],
+                         "url":href})
+        if found==0 or offset>400: break
+        offset+=20
+    return jobs
+
+
 FETCHERS = {
     "greenhouse": fetch_greenhouse,
     "lever": fetch_lever,
     "ashby": fetch_ashby,
     "workday": fetch_workday,
     "google": fetch_google,
+    "eightfold": fetch_eightfold,
+    "oracle": fetch_oracle,
+    "avature": fetch_avature,
 }
 
 
