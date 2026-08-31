@@ -38,6 +38,9 @@ URL of an actual posting:
 | `jobs.lever.co/acme/...`          | lever      | `token: acme`                          |
 | `jobs.ashbyhq.com/acme/...`       | ashby      | `token: acme`                          |
 | `acme.wd5.myworkdayjobs.com/...`  | workday    | `host`, `tenant`, `site` from the URL |
+| `explore.jobs.acme.net/...`       | eightfold  | `host`, `domain`                       |
+| `*.fa.ocs.oraclecloud.com/...`    | oracle     | `host`, `site` (CandidateExperience site name) |
+| `acme.avature.net/careers/...`    | avature    | `host`                                 |
 
 Workday URL anatomy: `https://<host>/en-US/<site>/job/...` and the tenant is
 usually the subdomain (e.g. `nvidia.wd5.myworkdayjobs.com` → tenant `nvidia`).
@@ -54,3 +57,16 @@ EMAIL_APP_PASSWORD=xxxx python watch.py
 ```
 
 Delete `seen.json` to reset the baseline.
+
+## Scan latency
+
+GitHub throttles *scheduled* workflows heavily — a `*/10` cron in practice
+fires every 2-8 hours, so the cron alone cannot deliver 10-minute alerts.
+Each run therefore stays alive and scans on its own timer: `LOOP_SCANS`
+(default 6) scans, 10 minutes apart, committing after each one. The cron
+just restarts the loop, and the `job-watch` concurrency group keeps at most
+one run active with one queued behind it.
+
+To go tighter, trigger `workflow_dispatch` from an external cron
+(cron-job.org, or any box you control) with a PAT — GitHub does not throttle
+dispatched runs the way it throttles `schedule`.
