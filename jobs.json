@@ -1,5 +1,77 @@
 [
   {
+    "id": "greenhouse:pinterest:8138049",
+    "company": "Pinterest",
+    "title": "University Grad Software Engineer (Toronto)",
+    "location": "Toronto, ON, CA",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8138049",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:7838591",
+    "company": "Pinterest",
+    "title": "University Grad Software Engineer 2027 (USA)",
+    "location": "San Francisco, CA, US; Remote, US",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838591",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:8138065",
+    "company": "Pinterest",
+    "title": "University Grad Machine Learning Engineer 2027 (Toronto)",
+    "location": "Toronto, ON, CA",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8138065",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:7838577",
+    "company": "Pinterest",
+    "title": "Software Engineer Intern 2027 (USA)",
+    "location": "San Francisco, CA, US; Remote, US",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=7838577",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:8138039",
+    "company": "Pinterest",
+    "title": "Software Engineering Intern 2027 (Toronto)",
+    "location": "Toronto, ON, CA",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8138039",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:8140219",
+    "company": "Pinterest",
+    "title": "Master's University Grad Machine Learning Engineer 2027 (USA)",
+    "location": "San Francisco, CA, US; Palo Alto, CA, US; Seattle, WA, US; New York, NY, US",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8140219",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:8138090",
+    "company": "Pinterest",
+    "title": "Master's Machine Learning Internship 2027 (USA)",
+    "location": "San Francisco, CA, US; Palo Alto, CA, US; Seattle, WA, US; New York, NY, US",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8138090",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:8138097",
+    "company": "Pinterest",
+    "title": "Master's Data Science Internship 2027 (USA)",
+    "location": "San Francisco, CA, US; Palo Alto, CA, US; Seattle, WA, US; New York, NY, US",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8138097",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
+    "id": "greenhouse:pinterest:8138080",
+    "company": "Pinterest",
+    "title": "Machine Learning Intern 2027 (Toronto)",
+    "location": "Toronto, ON, CA",
+    "url": "https://www.pinterestcareers.com/jobs/?gh_jid=8138080",
+    "seen_at": "2026-10-01T19:03:24+00:00"
+  },
+  {
     "id": "greenhouse:doordashusa:8204111",
     "company": "DoorDash",
     "title": "Machine Learning Intern (Masters) - Summer 2027",
